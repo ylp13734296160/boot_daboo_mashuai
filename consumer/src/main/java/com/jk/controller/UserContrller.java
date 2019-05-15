@@ -149,6 +149,7 @@ public class UserContrller {
     public HashMap<String, Object> login(UserBean userBean,HttpServletRequest request){
         HashMap<String, Object> result = new HashMap<>();
         System.out.println(11111);
+        System.out.println(22222);
         HttpSession session = request.getSession();
         //通过前台登录账号查询用户信息
         UserBean userInfo = userService.getUserInfoByLoginNumber(userBean);
