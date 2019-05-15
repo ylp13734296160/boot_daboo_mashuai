@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/index.css" />
+    <link rel="stylesheet" href="../js/easyui/themes/default/easyui.css"/>
+    <link rel="stylesheet" href="../js/easyui/themes/icon.css"/>
+    <link rel="stylesheet" href="../js/easyui/themes/color.css"/>
+    <script src="../js/easyui/jquery.min.js"></script>
+    <script src="../js/easyui/jquery.easyui.min.js"></script>
+    <script src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+</head>
+<body>
+<img src="../img/bgImg.jpg" class="bgImg" />
+<div class="content">
+    <div class="bidTitle">F-后台管理系统</div>
+    <div class="logCon">
+        <div class="line"><span>账号:</span>
+            <input class="bt_input" type="text" id="loginNumber" /></div>
+        <div class="line"><span>密码:</span>
+            <input class="bt_input" type="password" id="password"/></div>
+
+    </div>
+    <button type="button" id="loginBtn" class="logingBut">登录</button>
+</div>
+</div>
+<div style="text-align:center;">
+
+</div>
+</body>
+<script type="text/javascript">
+
+    $('#loginBtn').click(function(){
+       /* $.ajax({
+            url:'../login',
+            type:'post',
+            data:{
+                account:$('#loginNumber').val(),
+                password:$('#password').val()
+
+            },
+            dataType:'json',
+            success:function(result){
+                if(result.code == 0){
+                    window.location.href='../page/easyui'
+                }else{
+                    $.messager.alert('提示',result.msg,'info')
+                }
+            }
+        })*/
+       location="../page/easyui";
+    })
+</script>
+</html>

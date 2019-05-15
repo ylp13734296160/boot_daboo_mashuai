@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jk.dao.UserDao" >
+   <select id="findNavList" resultType="com.jk.model.NavBean">
+      select * from t_nav
+   </select>
+   <select id="findBooksList" parameterType="map"
+           resultType="com.jk.model.UserBean">
+      select group_concat(tr.name) as
+      roleName,u.id,u.name,u.age,u.account,u.password,u.sex,u.head_img as
+      headImg,u.status,d.name as deptName,a1.name as provinceName,a2.name as
+      cityName from t_user u
+      left join t_dept d on u.dept_id = d.id
+      left join
+      t_area a1 on u.province_id = a1.id
+      left join t_area a2 on u.city_id =
+      a2.id
+      left join t_user_role tur on u.id = tur.userId
+      left join t_role tr
+      on tur.roleId = tr.id
+      <include refid="userSql"></include>
+      group by u.id
+      limit #{startIndex},#{endIndex}
+   </select>
+   <insert id="saveUserRole"
+           parameterType="com.jk.model.UserRoleBean">
+      insert into t_user_role(userId,roleId) values
+      <foreach collection="list" index="index" item="item"
+               separator=",">
+         (#{item.userId},#{item.roleId})
+      </foreach>
+   </insert>
+   <insert id="addUser" parameterType="com.jk.model.UserBean">
+      <selectKey keyProperty="id" order="AFTER" resultType="int">
+         select
+         LAST_INSERT_ID()
+      </selectKey>
+      insert into
+      t_user(name,age,account,password,dept_id,sex,head_img,province_id,city_id,status)
+      values(#{name},#{age},#{account},#{password},#{deptId},#{sex},#{headImg},#{provinceId},#{cityId},0)
+   </insert>
+   <delete id="deleteUser" parameterType="int">
+      delete from t_user where id in
+      <foreach collection="array" index="index" item="item" open="("
+               close=")" separator=",">
+         #{item}
+      </foreach>
+   </delete>
+   <sql id="userSql">
+      <where>
+         <if test=" userBean.name != null and userBean.name != ''">
+            and u.name like '%${userBean.name}%'
+         </if>
+         <if test="userBean.endTime != null and userBean.endTime != '' ">
+            and u.age &lt;= ${userBean.endTime}
+         </if>
+         <if
+                 test="userBean.startTime != null and userBean.startTime != '' ">
+            and u.age &gt;= ${userBean.startTime}
+         </if>
+      </where>
+   </sql>
+   <delete id="removePower" parameterType="int">
+      delete from t_nav where id in(
+      <foreach collection="list" index="index" item="item"
+               separator=",">
+         #{item}
+      </foreach>
+      )
+   </delete>
+   <insert id="addRole" parameterType="com.jk.model.RoleBean">
+		insert into t_role(name)
+		values (#{name})
+	</insert>
+   <insert id="saveRolePower"
+           parameterType="com.jk.model.RolePowerBean">
+      insert into t_role_power(roleId,powerId) values
+      <foreach collection="list" index="index" item="item"
+               separator=",">
+         (#{item.roleId},#{item.powerId})
+      </foreach>
+   </insert>
+   <delete id="deleteRole" parameterType="int">
+      delete from t_role where id in
+      <foreach collection="array" index="index" item="item" open="("
+               close=")" separator=",">
+         #{item}
+      </foreach>
+   </delete>
+   <!-- 登录 -->
+   <select id="getUserInfoByLoginNumber" resultType="com.jk.model.UserBean">
+     select group_concat(tr.name) as
+      roleName,u.id,u.name,u.age,u.account,u.password,u.sex,u.head_img as
+      headImg,u.status,d.name as deptName,a1.name as provinceName,a2.name as
+      cityName from t_user u
+      left join t_dept d on u.dept_id = d.id
+      left join
+      t_area a1 on u.province_id = a1.id
+      left join t_area a2 on u.city_id =
+      a2.id
+      left join t_user_role tur on u.id = tur.userId
+      left join t_role tr
+      on tur.roleId = tr.id
+           where u.account=#{account}
+  </select>
+</mapper>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<!-- 引入easyui样式文件 -->
+<link type="text/css" rel="stylesheet" href="/js/jquery-easyui-1.5/themes/default/easyui.css">
+<!-- 引入easyui图标样式文件 -->
+<link type="text/css" rel="stylesheet" href="/js/jquery-easyui-1.5/themes/icon.css">
+<!-- 引入jquery js文件 -->
+<script type="text/javascript" src="/js/jquery-easyui-1.5/jquery.min.js"></script>
+<!-- 引入easyui的js文件 -->
+<script type="text/javascript" src="/js/jquery-easyui-1.5/jquery.easyui.min.js"></script>
+<!-- 引文easyui支持中文js -->
+<script type="text/javascript" src="/js/jquery-easyui-1.5/locale/easyui-lang-zh_CN.js"></script>
+<link rel="stylesheet" href="/js/uploadify/uploadify.css"/>
+<script type="text/javascript" src="/js/uploadify/jquery.uploadify.min.js"></script>
+
+<body>
+<div id="toolbar">
+    <table>
+        <tr>
+            <td>姓名:<input type="text" class="easyui-textbox" id="nameSelect"></td>
+            <td>
+                年龄区间:<input type="text" class="easyui-textbox" id="startTime">-
+                <input type="text" class="easyui-textbox" id="endTime">
+            </td>
+            <td><a data-options="iconCls:'icon-search'" class="easyui-linkbutton" id="searchBtn">搜索</a></td>
+        </tr>
+        <tr>
+            <td>
+                <a id="delbut" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">批量删除</a>
+                <a id="addBtn" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">新增</a>
+                <a id="updBtn" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true">修改</a>
+            </td>
+        </tr>
+    </table>
+</div>
+<table id="booktable"></table>
+<div id="userDialog" class="easyui-dialog" data-options="title:'用户',modal:true,closed:true,buttons:[{
+		text:'保存',
+		plain:true,
+		iconCls:'icon-save',
+		handler:function(){
+			saveUser();
+		}
+	}]" style="width: 700px; height: 500px">
+    <form id="userForm" method="post">
+        <table>
+            <tr>
+                <td>用户名</td>
+                <td>
+                    <input type="text" name="name" class="easyui-textbox"/>
+                    <input type="hidden" name="id">
+                </td>
+            </tr>
+            <tr>
+                <td><img id="testimg" src="" style="width: 50px;height: 50px"></td>
+                <td>
+                    <input type="hidden" id="hideImg" name="headImg"/>
+                    <input type="file" id="uploadify"/>
+                </td>
+            </tr>
+            <tr>
+                <td>年龄</td>
+                <td> <input type="text" name="age" class="easyui-textbox"/> </td>
+            </tr>
+            <tr>
+                <td>性别</td>
+                <td>
+                    <label>
+                        <input type="radio" name="sex" value="1"/>男
+                    </label>
+                    <label>
+                        <input type="radio" name="sex" value="0"/>女
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td>账号</td>
+                <td>
+                    <input type="text" class="easyui-textbox" name="account"/>
+                </td>
+            </tr>
+            <tr>
+                <td>密码</td>
+                <td>
+                    <input type="text" class="easyui-passwordbox" name="password"/>
+                </td>
+            </tr>
+            <tr>
+                <td>确认密码</td>
+                <td>
+                    <input type="text" class="easyui-passwordbox" name="password2"/>
+                </td>
+            </tr>
+            <tr>
+                <td>部门</td>
+                <td>
+                    <input id="deptSelect" name="deptId" class="easyui-combotree" style="width: 150px">
+                </td>
+            </tr>
+            <tr>
+                <td>地区</td>
+                <td>
+                    <select id="provinceSelect" name="provinceId" class="easyui-combobox" style="width: 100px"></select>
+                    -
+                    <select id="citySelect" name="cityId" class="easyui-combobox" style="width: 100px"></select>
+                </td>
+            </tr>
+            <tr>
+                <td>角色</td>
+                <td>
+                    <select id="roleSelect" name="roleId" class="easyui-combobox" style="width: 100px"></select>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+</body>
+<script type="text/javascript"  th:inline="none">
+    //修改
+    $("#updBtn").click(function(){
+        var cars = $("#booktable").datagrid('getSelections');
+        if (cars.length != 1) {
+            $.messager.alert('提示','只能选择一条修改','warning');
+            return;
+        }
+        //初始化部门下拉树
+        initDeptSelect();
+        //初始化二级联动
+        initArea();
+        //初始化角色下拉框
+        initRoleSelect();
+        //打开新增div
+        var id= cars[0].id;
+        alert(id)
+        $.ajax({
+            url:'../findUserById',
+            type:'post',
+            data:{
+                id:id
+            },
+            dataType:'json',
+            success: function(data){
+                $("#userForm").form('load',data);
+                $("#testimg").attr('src',data.headImg);
+                $("#userDialog").dialog({
+                    title:'修改用户',
+                    closed:false
+                })
+            }
+        })
+    })
+    //条查
+    $("#searchBtn").click(function(){
+        var searchName = $("#nameSelect").textbox('getValue');
+        var startTime = $("#startTime").textbox('getValue');
+        var endTime = $("#endTime").textbox('getValue');
+        $("#booktable").datagrid('load',{
+            name:searchName,
+            startTime:startTime,
+            endTime:endTime
+        })
+    })
+    //批删
+    $("#delbut").click(function(){
+        var cars =  $("#booktable").datagrid('getSelections');
+        if (cars.length <= 0) {
+            $.messager.alert('提示','请选择需要删除的数据','warning');
+        }
+        $.messager.confirm('确认对话框','你确定要删除吗',function(r){
+            if (r) {
+                var ids="";
+                for (var i = 0; i < cars.length; i++) {
+                    ids += ids =="" ? cars[i].id : ","+cars[i].id;
+                }
+                $.ajax({
+                    url:'../deleteuser',
+                    type:'post',
+                    data:{
+                        ids:ids
+                    },
+                    dataType:'json',
+                    success: function(data){
+                        if (data) {
+                            $("#booktable").datagrid('reload');
+                        }
+                        else {
+                            $.messger.alert('提示','删除失败','error');
+                        }
+                    }
+                });
+            }
+        })
+    })
+    $("#addBtn").click(function(){
+        //初始化部门下拉树
+        initDeptSelect();
+        //初始化二级联动
+        initArea();
+        //初始化角色下拉框
+        initRoleSelect();
+        //打开新增div
+        $("#userDialog").dialog({
+            title:'新增用户',
+            closed:false
+        })
+    })
+    /* $(function(){
+            initUserTable();
+        }) */
+    function closeUserDialog(){
+        $("#userDialog").dialog('close')
+    }
+    //新增
+    function saveUser(){
+        $("#userForm").form('submit',{
+            url:'../add.do',
+            onSubmit:function(){
+            },
+            success:function(data){
+                //让列表重新加载
+                $("#booktable").datagrid('reload');
+                //关闭弹框
+                closeUserDialog();
+                //清空表单
+                $("#userForm").form('clear');
+                $("#showImg").attr('src','');
+            }
+        })
+    }
+    //角色下拉框
+    function initRoleSelect(){
+        $("#roleSelect").combobox({
+            url:'../findRoleList',
+            textField:'name',
+            valueField:'id',
+            multiple:true
+        })
+    }
+    //地区下拉框
+    function initArea(){
+        $("#provinceSelect").combobox({
+            url:'../findArea?id=0',
+            textField:'name',
+            valueField:'id',
+            onChange:function(newValue,oldValue){
+                $("#citySelect").combobox({
+                    url:'../findArea?id='+newValue,
+                    textField:'name',
+                    valueField:'id'
+                })
+            }
+        })
+    }
+    //初始化部门下拉树
+    function initDeptSelect(){
+        $("#deptSelect").combotree({
+            url:'../findDeptList'
+        })
+    }
+    $("#booktable").datagrid({
+        url:'../sel',
+        fit:true,
+        toolbar:'#toolbar',
+        pagination:true,
+        pageSize:1,
+        pageList:[1,2,10,15,20,50],
+        columns:[[
+            {field:'qx',checkbox:true},
+            {field:'name',title:'名字'},
+            {field:'account',title:'账号'},
+            {field:'age',title:'年龄'},
+            {field:'password',title:'密码'},
+            {field:'sex',title:'性别',formatter:function(value,row,index){
+                    return value==1?'男':'女';
+                }},
+            {field:'headImg',title:'头像',formatter:function(value,row,index){
+                    return '<img width="50px" height="50px" src="'+value+'"/>';
+                }},
+            {field:'provinceName',title:'地区',formatter:function(value,row,index){
+                    return value +"-"+row.cityName;
+                }},
+            {field:'status',title:'状态',formatter:function(value,row,index){
+                    return value == 0 ? "正常" : "锁定";
+                }},
+            {field:'roleName',title:'角色'},
+            {field:'qqq',title:'操作',formatter:function(value,row,index){
+                    return row.status == 0 ? '<a href="javascript:updateStatus('+row.id+')">上锁</a>' :'<a href="javascript:updateByStatus('+row.id+')">解锁</a>';
+                }}
+        ]]
+    })
+    function updateByStatus(id){
+        $.messager.prompt('提示信息', '请输入密码', function(r){
+            if (r){
+                $.ajax({
+                    url:'../user/updateByStatus.do',
+                    data:{id:id,r:r},
+                    dataTpye:'josn',
+                    type:'post',
+                    success:function(data){
+                        $("#booktable").datagrid('reload');
+                    },
+                    error:function(data){
+                        alert("提示密码错误，无法锁定该账号")
+                    }
+                })
+            }
+        });
+    }
+    function updateStatus(id){
+        $.ajax({
+            url:'../user/updateStatus.do',
+            data:{id:id},
+            type:'post',
+            dataType:'json',
+            success:function(data){
+                $("#booktable").datagrid('reload');
+            }
+        })
+    }
+    //上传插件
+    $("#uploadify").uploadify({
+        //插件自带  不可忽略的参数
+        'swf': '<%=request.getContextPath()%>/js/uploadify/uploadify.swf',
+        //前台请求后台的url 不可忽略的参数
+        'uploader': '<%=request.getContextPath()%>/user/upload.do',
+        //给div的进度条加背景 不可忽略
+        'queueID': 'fileQueue',
+        //上传文件文件名
+        'fileObjName' : 'img',
+        //给上传按钮设置文字
+        'buttonText': '上传图片',
+        //设置文件是否自动上传
+        'auto': true,
+        //可以同时选择多个文件 默认为true  不可忽略
+        'multi': false,
+        //上传后队列是否消失
+        'removeCompleted': true,
+        //允许上传的文件后缀
+        'fileExt': '*.jpg;*.gif;*.png',
+        //
+        'cancelImg': '<%=request.getContextPath()%>/js/uploadify/uploadify-cancel.png',
+        //队列消失时间
+        'removeTimeout' : 1,
+        //上传文件的个数，项目中一共可以上传文件的个数
+        'uploadLimit':  -1,
+        'fileTypeExts': '*.jpg;*.png',
+        //开始执行上传
+        'onUploadStart':function(files){
+            //$.messager.progress({ title:'提示',msg:'上传中...' });
+        },
+        //上传失败
+        'onUploadError':function(){
+            //$.messager.progress('close');
+            //$.messager.alert('提示','上传失败');
+            alert("上传失败");
+        },
+        //成功回调函数 file：文件对象。data后台输出数据
+        'onUploadSuccess':function(file,data,response){
+            //$.messager.progress('close');
+            //  alert(data+file.name)
+            data = eval(data);      // 图片出现 “” 去除引号的
+            var imgurl = "http://<%= request.getServerName()%>:<%=request.getServerPort()%><%=request.getContextPath()%>/"+data
+            $("#testimg").attr("src",imgurl);
+            $('#hideImg').val(imgurl);
+        }
+    });
+
+</script>
+</body>
+</html>
